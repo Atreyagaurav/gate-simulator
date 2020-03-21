@@ -20,7 +20,7 @@ typedef struct {
 typedef struct {
   int rank;
   int number;
-  Gate* gates;
+  Gate** gates;
 } GateStack;
 
 typedef struct {
@@ -29,7 +29,7 @@ typedef struct {
   int nodes;
   int gates;
   int levels;
-  GateStack* stack;
+  GateStack *stack;
 } Circuit;
 
 
@@ -49,69 +49,76 @@ char* gateTypeName(int gcode){
 void addGateInStack(GateStack* gs, Gate* g){
   int i;
   for (i=0;i<gs->number;i++){
-    if (g==(gs->gates + i)){
+    if (g==*(gs->gates + i)){
       return ;
     }
   }
   gs->number += 1;
   gs->gates = realloc(gs->gates,(gs->number)*sizeof(Gate));
-  *(gs->gates + gs->number-1) = *g;
+  *(gs->gates + gs->number-1) = g;
 }
 
-void printGate(Gate g){
-  printf("Gate Type: 1\n");
-  printf("\tInput nodes:%d,%d\n",g.inputs[0],g.inputs[1]);
-  printf("\tOutput node:%d",g.output);
+void printGate(Gate* g){
+  printf("Gate Type: %s\t",gateTypeName(g->gateType));
+  printf("Rank:%d\n",g->rank);
+  printf("\tInput nodes:%d,%d\n",g->inputs[0],g->inputs[1]);
+  printf("\tOutput node:%d\n",g->output);
 }
 
-int processGate(Gate g, int* inputList){
-  switch(g.gateType) {
+void printGates(int numGate,Gate* gates){
+  int i;
+  for(i=0;i<numGate;i++){
+    printGate(gates+i);
+  }
+}
+
+int processGate(Gate* g, int* inputList){
+  switch(g->gateType) {
   case NOT_GATE:
-    inputList[g.output] = !inputList[g.inputs[0]];
+    inputList[g->output] = !inputList[g->inputs[0]];
     break;
   case AND_GATE:
-    inputList[g.output] = inputList[g.inputs[0]] & inputList[g.inputs[1]];
+    inputList[g->output] = inputList[g->inputs[0]] & inputList[g->inputs[1]];
     break;
   case OR_GATE:
-    inputList[g.output] = inputList[g.inputs[0]] | inputList[g.inputs[1]];
+    inputList[g->output] = inputList[g->inputs[0]] | inputList[g->inputs[1]];
     break;
     }
-  return inputList[g.output];
+  return inputList[g->output];
 }
 
-Gate parseGateDef(char* str){
-  Gate g;
+void parseGateDef(Gate* g,char* str){
   char gtype[5],nodes[10];
   int i=0;
   int j=0;
+  
   while(str[i]!=':'){
     gtype[i] = str [i];
     i++;
   }
-  gtype[i]='\0';
+  gtype[i++]='\0';
   while(str[i]!='\0'){
     nodes[j++] = str[i++];
   }
   nodes[j]='\0';
   
   if (strcmp(gtype,"AND")==0){
-      g.gateType = AND_GATE;
+    g->gateType = AND_GATE;
   }else if (strcmp(gtype,"OR")==0){
-    g.gateType = OR_GATE;
+    g->gateType = OR_GATE;
   }else if (strcmp(gtype,"NOT")==0){
-    g.gateType = NOT_GATE;
+    g->gateType = NOT_GATE;
   }else{
-    g.gateType = UNDEF_GATE;
+    g->gateType = UNDEF_GATE;
   }
-  switch (g.gateType){
+  switch (g->gateType){
   case AND_GATE:
   case OR_GATE:
-    sscanf(nodes,"%d-%d->%d",g.inputs,g.inputs+1,&g.output);
+    sscanf(nodes,"%d-%d->%d",g->inputs,g->inputs+1,&g->output);
     break;
   case NOT_GATE:
-    sscanf(nodes,"%d->%d",g.inputs,&g.output);
+    sscanf(nodes,"%d->%d",g->inputs,&g->output);
   }
-  return g;
 }
 
 int processFile(Circuit* cir, char* infile, char* outfile){
@@ -144,33 +151,36 @@ void processGatesRank(int numGates, int numInput, int numNodes, Gate* gates){
     *(nodesRank+i) = -1;
   }
 
-  for(j=0;j<numGates;j++){
-    for(i=0;i<numGates;i+=){
+  for(j=0;j<numGates+10;j++){
+    for(i=0;i<numGates;i++){
       g = (gates+i);
       n1 = *(g->inputs);
       n2 = *(g->inputs+1);
       rank = max_nd(*(nodesRank+n1),*(nodesRank+n2));
-      *(nodesRank+ g->output) = rank;
+      *(nodesRank+ g->output) = rank+1;
       if (rank >-1){
 	g->rank = rank;
       }
     }
   }
+  
+  free(nodesRank);
 }
 
 void processStack(Circuit* cir,int* nodesValue){
   int i,j;
   for(i=0; i < (cir->levels); i++){
-    for(j=0; j< (cir->stack->number);j++){
-      processGate(*(cir->stack->gates+j), nodesValue);
+    for(j=0; j< ( (cir->stack+i) -> number);j++){
+      processGate((cir->stack+i)->gates[j], nodesValue);
     }
   }
 }
 
 Circuit* makeCircuit(int gatesNumber, Gate* gates){
-  Circuit c;
+  Circuit* c;
   int i,j,n;
   n=0;
+  c = malloc(sizeof(Circuit));
   for(i=0;i<gatesNumber;i++){
     n = max_nd(n,(gates+i)->rank);
   }
@@ -179,7 +189,7 @@ Circuit* makeCircuit(int gatesNumber, Gate* gates){
   }
   
   
-  return &c;
+  return c;
 }
   
 int main(int argc,char* argv[]){
@@ -214,7 +224,7 @@ int main(int argc,char* argv[]){
 
   for(i=0;i<gateN;i++){
     fscanf(fp,"%s\n",line);
-    *(gates+i) = parseGateDef(line);
+    parseGateDef((gates+i),line); /*memory leak manage later*/
     printf("parsing %d gates\r",i+1);
   }
   printf("\n");
@@ -227,12 +237,15 @@ int main(int argc,char* argv[]){
   }
   fclose(fp);
 
-  gstack = malloc(sizeof(GateStack));
-  gstack->rank = 0;
-  gstack->number=1;
-  gstack->gates = gates;
-  
-  
+
+  processGatesRank(gateN, inN, totN, gates);
+
+  printGates(gateN,gates);
+  /* gstack = malloc(sizeof(GateStack)); */
+  /* gstack->rank = 0; */
+  /* gstack->number=1; */
+  /* gstack->gates = &gates; */
+
   return 0;
 }
 
