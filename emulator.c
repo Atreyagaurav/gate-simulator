@@ -65,6 +65,18 @@ void printGate(Gate* g){
   printf("\tOutput node:%d\n",g->output);
 }
 
+void printArray(int length,int* array){
+  int i;
+  printf("[");
+  for(i=0;i<length-1;i++){
+    printf("%d,",*(array+i));
+  }
+  if(length>0){
+  printf("%d",*(array+length-1));
+  }
+  printf("]");
+}
+
 void printGates(int numGate,Gate* gates){
   int i;
   for(i=0;i<numGate;i++){
@@ -121,11 +133,25 @@ void parseGateDef(Gate* g,char* str){
   }
 }
 
-int processFile(Circuit* cir, char* infile, char* outfile){
-  
-  while(1){
-    /*TODO*/
+int readBooleans(FILE* fp,int nodeLength, int* nodes){
+  char c;
+  int i;
+  for(i=0;i<nodeLength;i++){
+    c = fgetc(fp);
+    if(c==EOF){
+      return 0;
+    }
+    if (c=='\n'){
+      for(;i<nodeLength;i++){
+	*(nodes+i)=0;
+      }
+    }
+    *(nodes+i) = c - '0';
   }
+  while(c!='\n' && c!=EOF){
+    c=fgetc(fp);
+  }
+  return 1;
 }
 
 int max_nd(int a, int b){
@@ -151,7 +177,6 @@ void processGatesRank(int numGates, int numInput, int numNodes, Gate* gates){
     *(nodesRank+i) = -1;
   }
 
-  for(j=0;j<numGates+10;j++){
     for(i=0;i<numGates;i++){
       g = (gates+i);
       n1 = *(g->inputs);
@@ -161,13 +186,14 @@ void processGatesRank(int numGates, int numInput, int numNodes, Gate* gates){
       if (rank >-1){
 	g->rank = rank;
       }
+      printArray(numNodes, nodesRank);
+      printf("\n");
     }
-  }
   
   free(nodesRank);
 }
 
-void processStack(Circuit* cir,int* nodesValue){
+void processCircuit(Circuit* cir,int* nodesValue){
   int i,j;
   for(i=0; i < (cir->levels); i++){
     for(j=0; j< ( (cir->stack+i) -> number);j++){
@@ -179,25 +205,73 @@ void processStack(Circuit* cir,int* nodesValue){
 Circuit* makeCircuit(int gatesNumber, Gate* gates){
   Circuit* c;
   int i,j,n;
+  GateStack* stack; 
   n=0;
   c = malloc(sizeof(Circuit));
+  
   for(i=0;i<gatesNumber;i++){
     n = max_nd(n,(gates+i)->rank);
   }
   if (n==-1){
     printf("well well well,\n\tSee who made an error\n");
   }
-  
-  
+
+  n+=1;
+  stack = malloc(n*sizeof(GateStack));
+  c->levels = n;
+  for(i=0;i<n;i++){
+    (stack+i)->rank = i;
+    (stack+i)->number = 0;
+    (stack+i)->gates = NULL;
+    for(j=0;j<n;j++){
+      if((gates+j)->rank == i){
+	(stack+i)->number += 1;
+	(stack+i)->gates = realloc((stack+i)->gates,(stack+i)->number * sizeof(GateStack*));
+	*((stack+i)->gates + (stack+i)->number - 1) = gates + j;
+      }
+    }
+  }
+  c->stack = stack;
   return c;
 }
+
+
+int processFile(Circuit* cir, char* infile, char* outfile){
+  FILE* ifilep;
+  FILE* ofilep;
+  int i,j,flag;
+  int * nodes;
   
+  ifilep = fopen(infile,"r");
+  ofilep = fopen(outfile,"w");
+
+  nodes = malloc(cir->nodes * sizeof(int));
+  for(i=0; i<cir->nodes; i++){
+    *(nodes+i) = 0;
+  }
+  while(1){
+    flag = readBooleans(ifilep, cir->inputs, nodes);
+    if(flag==0){
+      break;
+    }
+    processCircuit(cir,nodes);
+    printArray(cir->inputs, nodes);
+    printf("->");
+    printArray(cir->outputs, nodes + cir->nodes - cir->outputs);
+    printf("\n");
+  }
+
+  fclose(ifilep);
+  fclose(ofilep);
+  return 1;
+}
+
+
 int main(int argc,char* argv[]){
   int *inputList;
   int i,totN,inN,outN,gateN;
   char filename[20],line[20];
   Gate *gates;
-  GateStack *gstack;
   char c;
 
   FILE * fp;
@@ -241,6 +315,15 @@ int main(int argc,char* argv[]){
   processGatesRank(gateN, inN, totN, gates);
 
   printGates(gateN,gates);
+
+  Circuit* cir;
+  cir = makeCircuit(gateN, gates);
+  cir->inputs = inN;
+  cir->outputs = outN;
+  cir->nodes = totN;
+  cir->gates = gateN;
+  
+  processFile(cir, "simple.inc", "simple.out");
   /* gstack = malloc(sizeof(GateStack)); */
   /* gstack->rank = 0; */
   /* gstack->number=1; */
