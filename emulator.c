@@ -61,7 +61,11 @@ void addGateInStack(GateStack* gs, Gate* g){
 void printGate(Gate* g){
   printf("Gate Type: %s\t",gateTypeName(g->gateType));
   printf("Rank:%d\n",g->rank);
-  printf("\tInput nodes:%d,%d\n",g->inputs[0],g->inputs[1]);
+  if(g->gateType == NOT_GATE){
+    printf("\tInput node:%d\n",g->inputs[0]);
+  }else{
+    printf("\tInput nodes:%d,%d\n",g->inputs[0],g->inputs[1]);
+  }
   printf("\tOutput node:%d\n",g->output);
 }
 
@@ -84,7 +88,21 @@ void printGates(int numGate,Gate* gates){
   }
 }
 
+void printCircuit(Circuit* cir){
+  int i,j;
+  printf("Circuit:: nodes: %d\tLevels:%d\n",cir->nodes,cir->levels);
+  for(i=0; i < (cir->levels); i++){
+      printf("********Level: %d********\n",i);
+    for(j=0; j< ( (cir->stack+i) -> number);j++){
+      printGate((cir->stack+i)->gates[j]);
+    }
+  }
+  printf("******** END ********\n");
+}
+
 int processGate(Gate* g, int* inputList){
+  /* printf("processing;;"); */
+  /* printGate(g); */
   switch(g->gateType) {
   case NOT_GATE:
     inputList[g->output] = !inputList[g->inputs[0]];
@@ -177,19 +195,20 @@ void processGatesRank(int numGates, int numInput, int numNodes, Gate* gates){
     *(nodesRank+i) = -1;
   }
 
+  for(j=0;j<numNodes;j++){
     for(i=0;i<numGates;i++){
       g = (gates+i);
       n1 = *(g->inputs);
       n2 = *(g->inputs+1);
       rank = max_nd(*(nodesRank+n1),*(nodesRank+n2));
-      *(nodesRank+ g->output) = rank+1;
       if (rank >-1){
+	*(nodesRank+ g->output) = rank+1;
 	g->rank = rank;
       }
-      printArray(numNodes, nodesRank);
-      printf("\n");
     }
-  
+  }
+  printArray(numNodes, nodesRank);
+  printf("\n");
   free(nodesRank);
 }
 
@@ -223,7 +242,7 @@ Circuit* makeCircuit(int gatesNumber, Gate* gates){
     (stack+i)->rank = i;
     (stack+i)->number = 0;
     (stack+i)->gates = NULL;
-    for(j=0;j<n;j++){
+    for(j=0;j<gatesNumber;j++){
       if((gates+j)->rank == i){
 	(stack+i)->number += 1;
 	(stack+i)->gates = realloc((stack+i)->gates,(stack+i)->number * sizeof(GateStack*));
@@ -259,6 +278,10 @@ int processFile(Circuit* cir, char* infile, char* outfile){
     printf("->");
     printArray(cir->outputs, nodes + cir->nodes - cir->outputs);
     printf("\n");
+    for(i=0;i<cir->outputs;i++){
+      fputc(*(nodes + cir->nodes - cir->outputs + i)+'0',ofilep);
+    }
+    fputc('\n',ofilep);
   }
 
   fclose(ifilep);
@@ -266,33 +289,19 @@ int processFile(Circuit* cir, char* infile, char* outfile){
   return 1;
 }
 
-
-int main(int argc,char* argv[]){
-  int *inputList;
+Circuit* readCircuitFile(char* filename){
   int i,totN,inN,outN,gateN;
-  char filename[20],line[20];
+  char line[20];
   Gate *gates;
   char c;
 
   FILE * fp;
-  if (argc>1){
-    strcpy(filename,argv[1]);
-  }else{
-    printf("Enter filename:");
-    scanf("%s",filename);
-  }
-
   fp = fopen(filename,"r");
   fscanf(fp,"nodes:%d\n",&totN);
   fscanf(fp,"input:%d\n",&inN);
   fscanf(fp,"output:%d\n",&outN);
   fscanf(fp,"gates:%d\n",&gateN);
 
-  inputList = malloc(totN * sizeof(int));
-
-  for(i=0;i<totN;i++){
-    inputList[i]=0;
-  }
   gates = malloc(gateN * sizeof(Gate));
   printf("%d,%d,%d,%d\n",totN,inN,outN,gateN);
 
@@ -304,16 +313,8 @@ int main(int argc,char* argv[]){
   printf("\n");
   fclose(fp);
 
-  fp = fopen("simple.inc","r");
-  for(i=0;i<inN;i++){
-    fscanf(fp,"%c",&c);
-    *(inputList+i) = c-'0';
-  }
-  fclose(fp);
-
-
   processGatesRank(gateN, inN, totN, gates);
-
+  
   printGates(gateN,gates);
 
   Circuit* cir;
@@ -322,13 +323,29 @@ int main(int argc,char* argv[]){
   cir->outputs = outN;
   cir->nodes = totN;
   cir->gates = gateN;
-  
-  processFile(cir, "simple.inc", "simple.out");
-  /* gstack = malloc(sizeof(GateStack)); */
-  /* gstack->rank = 0; */
-  /* gstack->number=1; */
-  /* gstack->gates = &gates; */
 
+  return cir;
+}
+
+int main(int argc,char* argv[]){
+  char cirFilename[30],inFilename[30],outFilename[30];
+  
+  if (argc>1){
+    strcpy(cirFilename,argv[1]);
+  }else{
+    printf("Enter filename (without extension):");
+    scanf("%s",cirFilename);
+  }
+  strcpy(inFilename, cirFilename);
+  strcpy(outFilename, cirFilename);
+  strcat(cirFilename,".cir");
+  strcat(inFilename,".inc");
+  strcat(outFilename,".out");
+  
+  Circuit* cir;
+  cir = readCircuitFile(cirFilename);
+  printCircuit(cir);
+  processFile(cir, inFilename, outFilename);
   return 0;
 }
 
