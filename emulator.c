@@ -6,6 +6,10 @@
 #define NOT_GATE 1
 #define AND_GATE 2
 #define OR_GATE 3
+#define NAND_GATE 4
+#define NOR_GATE 5
+#define XOR_GATE 6
+#define XNOR_GATE 7
 #define UNDEF_GATE 0
 
 /* enum {NOT,AND,OR} GateType; */
@@ -41,6 +45,14 @@ char* gateTypeName(int gcode){
     return "AND";
   case OR_GATE:
     return "OR";
+  case NAND_GATE:
+    return "NAND";
+  case NOR_GATE:
+    return "NOR";
+  case XOR_GATE:
+    return "XOR";
+  case XNOR_GATE:
+    return "XNOR";
   default:
     return "NA";
   }
@@ -113,6 +125,18 @@ int processGate(Gate* g, int* inputList){
   case OR_GATE:
     inputList[g->output] = inputList[g->inputs[0]] | inputList[g->inputs[1]];
     break;
+  case NAND_GATE:
+    inputList[g->output] = 1 - (inputList[g->inputs[0]] & inputList[g->inputs[1]]);
+    break;
+  case NOR_GATE:
+    inputList[g->output] = 1 - (inputList[g->inputs[0]] | inputList[g->inputs[1]]);
+    break;
+  case XOR_GATE:
+    inputList[g->output] = (inputList[g->inputs[0]] & (1-inputList[g->inputs[1]])) | (inputList[g->inputs[1]] & (1-inputList[g->inputs[0]]));
+    break;
+  case XNOR_GATE:
+    inputList[g->output] = 1 - ((inputList[g->inputs[0]] & (1-inputList[g->inputs[1]])) | (inputList[g->inputs[1]] & (1-inputList[g->inputs[0]])));
+    break;
     }
   return inputList[g->output];
 }
@@ -144,16 +168,24 @@ void parseGateDef(Gate* g,char* str){
     g->gateType = OR_GATE;
   }else if (strcmp(gtype,"NOT")==0){
     g->gateType = NOT_GATE;
+  }else if (strcmp(gtype,"NAND")==0){
+    g->gateType = NAND_GATE;
+  }else if (strcmp(gtype,"NOR")==0){
+    g->gateType = NOR_GATE;
+  }else if (strcmp(gtype,"XOR")==0){
+    g->gateType = XOR_GATE;
+  }else if (strcmp(gtype,"XNOR")==0){
+    g->gateType = XNOR_GATE;
   }else{
     g->gateType = UNDEF_GATE;
+    printf("Unrecogniged Gate Type: %s",gtype);
   }
   switch (g->gateType){
-  case AND_GATE:
-  case OR_GATE:
-    sscanf(nodes,"%d-%d->%d",g->inputs,g->inputs+1,&g->output);
-    break;
   case NOT_GATE:
     sscanf(nodes,"%d->%d",g->inputs,&g->output);
+    break;
+  default:
+    sscanf(nodes,"%d-%d->%d",g->inputs,g->inputs+1,&g->output);
   }
 }
 

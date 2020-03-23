@@ -3,7 +3,7 @@
 This program parses a electronic circuit from a file and simulate the output, reading the signals and writing the output in the file.
 
 ## Uses 
-You have to make 2 files for a simulation, `.cir` and `.inc`. More information about the files are in (Files)[Files] section.
+You have to make 2 files for a simulation, `.cir` and `.inc`. More information about the files are in [Files](#Files) section.
 
 After you have those files which specify the circuit layout and the input signals you can run the program specifying from which file to read from.
 
@@ -20,7 +20,7 @@ OR
 
 
 
-# Files
+# Files <a id='Files' />
 there should be two files named simple.cir and simple.inc, they have circuit configuration and input signals
 
 ### Circuit info file (.cir)
@@ -59,4 +59,4 @@ simple.inc
 
 
 # TODO:
-A lot to do, it can only read the circuit configuration for now. 
+A graphical interface with drag and drop to make the circuit. Maybe if I feel like it. 

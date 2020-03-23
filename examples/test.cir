@@ -1,0 +1,8 @@
+nodes:12
+input:8
+output:4
+gates:4
+NAND:0-1->8
+NOR:2-3->9
+XOR:4-5->10
+XNOR:6-7->11
