@@ -97,7 +97,7 @@ void printCircuit(Circuit* cir){
       printGate((cir->stack+i)->gates[j]);
     }
   }
-  printf("******** END ********\n");
+  printf("******** :END: ********\n");
 }
 
 int processGate(Gate* g, int* inputList){
@@ -121,13 +121,19 @@ void parseGateDef(Gate* g,char* str){
   char gtype[5],nodes[10];
   int i=0;
   int j=0;
-  
-  while(str[i]!=':'){
-    gtype[i] = str [i];
+  while(str[i]==' ' || str[i]=='\t'){
     i++;
   }
+  while(str[i]!=':'){
+    gtype[j++] = str [i++];
+  }
   gtype[i++]='\0';
+  j=0;
   while(str[i]!='\0'){
+    if(str[i]==' ' || str[i]=='\t'){
+      i+=1;
+      continue;
+    }
     nodes[j++] = str[i++];
   }
   nodes[j]='\0';

@@ -9,13 +9,13 @@ After you have those files which specify the circuit layout and the input signal
 
 either specify the filename (without extension) as parameter to executable or manually enter it after the program asks you.
 ```
-./emulator simple
+./emulator examples/simple
 ```
 OR
 ```
 ./emulator
 
->>Enter filename (without extension):simple
+>>Enter filename (without extension):examples/simple
 ```
 
 
@@ -26,7 +26,12 @@ there should be two files named simple.cir and simple.inc, they have circuit con
 ### Circuit info file (.cir)
 This file includes the layout of the electronic circuits. there are two example files given in example folder (simple.cir and complex.cir).
 
-the format can be seen in the example below, don't use any excess spaces or linebreaks.
+The things to be careful about making the .cir files are:
+* The format can be seen in the example below, don't use any excess spaces or linebreaks.
+* The number of nodes are started from zero and are continuous.
+* The first node numbers are reserved for input signals, if your input is 3, input nodes will be (0,1,2).
+* Similaryly last node numbers are for output, if you specify output as 2, signals of last 2 node numbers will be output in file.
+
 
 simple.cir
 ```
