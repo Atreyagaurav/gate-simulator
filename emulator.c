@@ -11,6 +11,7 @@
 #define XOR_GATE 6
 #define XNOR_GATE 7
 #define UNDEF_GATE 0
+#define DEBUG_LEVEL 0 /*unused*/
 
 /* enum {NOT,AND,OR} GateType; */
 
@@ -236,9 +237,14 @@ void processGatesRank(int numGates, int numInput, int numNodes, Gate* gates){
   for(j=0;j<numNodes;j++){
     for(i=0;i<numGates;i++){
       g = (gates+i);
+      if (g->gateType == NOT_GATE){
+	n1 = *(g->inputs);
+	rank = *(nodesRank+n1);
+      }else{
       n1 = *(g->inputs);
       n2 = *(g->inputs+1);
       rank = max_nd(*(nodesRank+n1),*(nodesRank+n2));
+      }
       if (rank >-1){
 	*(nodesRank+ g->output) = rank+1;
 	g->rank = rank;
@@ -384,6 +390,7 @@ int main(int argc,char* argv[]){
   cir = readCircuitFile(cirFilename);
   printCircuit(cir);
   processFile(cir, inFilename, outFilename);
+  printf("Output written in file: %s\n",outFilename);
   return 0;
 }
 
