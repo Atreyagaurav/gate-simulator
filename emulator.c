@@ -226,6 +226,7 @@ void processGatesRank(int numGates, int numInput, int numNodes, Gate* gates){
   int* nodesRank;
   Gate* g;
   int i,j,n1,n2,rank;
+  int flag = 0;
   nodesRank = malloc(numNodes * sizeof(int));
   for(i=0;i<numInput;i++){
     *(nodesRank+i) = 0;
@@ -249,6 +250,15 @@ void processGatesRank(int numGates, int numInput, int numNodes, Gate* gates){
 	*(nodesRank+ g->output) = rank+1;
 	g->rank = rank;
       }
+    }
+    flag = 1;
+    for(i=0;i<numNodes;i++){
+      if(*(nodesRank+i)==-1){
+	flag = 0;
+      }
+    }
+    if(flag){
+      break;
     }
   }
   printArray(numNodes, nodesRank);
