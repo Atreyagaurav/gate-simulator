@@ -59,6 +59,25 @@ char* gateTypeName(int gcode){
   }
 }
 
+void nextLine(FILE* fp){
+  char c;
+  int flag = 1;
+  while (flag){
+    c=fgetc(fp);
+    switch (c){
+    case '\n':
+    case ' ':
+      continue;
+    case '#':
+      while(fgetc(fp)!='\n');
+      break;
+    default:
+      flag=0;
+    }
+  }
+  fseek(fp, -1, SEEK_CUR);
+}
+
 void addGateInStack(GateStack* gs, Gate* g){
   int i;
   for (i=0;i<gs->number;i++){
@@ -351,16 +370,22 @@ Circuit* readCircuitFile(char* filename){
 
   FILE * fp;
   fp = fopen(filename,"r");
+  nextLine(fp);
   fscanf(fp,"nodes:%d\n",&totN);
+  nextLine(fp);
   fscanf(fp,"input:%d\n",&inN);
+  nextLine(fp);
   fscanf(fp,"output:%d\n",&outN);
+  nextLine(fp);
   fscanf(fp,"gates:%d\n",&gateN);
+  nextLine(fp);
 
   gates = malloc(gateN * sizeof(Gate));
   printf("%d,%d,%d,%d\n",totN,inN,outN,gateN);
 
   for(i=0;i<gateN;i++){
     fscanf(fp,"%s\n",line);
+    nextLine(fp);
     parseGateDef((gates+i),line); /*memory leak manage later*/
     printf("parsing %d gates\r",i+1);
   }

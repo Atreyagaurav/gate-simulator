@@ -1,17 +1,22 @@
 nodes:20
 input:7
 output:3
+#number of gates is necessary to be accurate, after the number is fullfilled if there are more gates they are not processed.
 gates:13
-AND:0-1->7
-AND:1-2->8
-NOT:2->9
-OR:7-8->12
-AND:0-15->17
-OR:12-13->15
-AND:9-3->13
-AND:12-3->16
-NOT:16->18
-OR:4-5->10
-NOT:6->11
-AND:10-11->14
-OR:16-14->19
+# the individual gate information starts from here.
+# keep in mind that the node numbers starts from zero and is continuous.
+# there are no error checking right now, so mistakes will cause error in memory handling.
+# also make sure there is no loop in circuit, Idk what'll happen in that case. 
+    AND:0-1->7
+    AND:1-2->8
+    NOT:2->9
+    OR:7-8->12
+    AND:0-15->17
+    OR:12-13->15
+    AND:9-3->13
+    AND:12-3->16
+    NOT:16->18
+    OR:4-5->10
+    NOT:6->11
+    AND:10-11->14
+    OR:16-14->19	
