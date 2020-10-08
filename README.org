@@ -1,0 +1,136 @@
+* Intro
+
+This program parses a electronic circuit from a file and simulate the output, reading the signals and writing the output in the file.
+
+** Uses 
+You have to make 2 files for a simulation, `.cir` and `.inc`. More information about the files are in [Files](*Files) section.
+
+After you have those files which specify the circuit layout and the input signals you can run the program specifying from which file to read from.
+
+either specify the filename (without extension) as parameter to executable or manually enter it after the program asks you.
+
+#+BEGIN_SRC bash
+./emulator examples/simple
+#+END_SRC
+
+OR
+
+#+BEGIN_SRC bash
+./emulator
+
+>>Enter filename (without extension):examples/simple
+#+END_SRC
+
+
+
+* Files
+there should be two files named simple.cir and simple.inc, they have circuit configuration and input signals
+
+*** Circuit info file (.cir)
+This file includes the layout of the electronic circuits. there are two example files given in example folder (simple.cir and complex.cir).
+
+The things to be careful about making the .cir files are:
+- The format can be seen in the example below, don't use any excess spaces or line breaks.
+- The number of nodes are started from zero and are continuous.
+- The first node numbers are reserved for input signals, if your input is 3, input nodes will be (0,1,2).
+- Similaryly last node numbers are for output, if you specify output as 2, signals of last 2 node numbers will be output in file.
+
+The examples are given for .cir and .inc file for two circuits. simple and complex. 
+The circuits and corresponding files are:
+
+[[./visualizer/simple.png]]
+
+This simple circuit can be represented/input with the following file. 
+
+#+begin_quote
+nodes:6
+
+input:3
+
+output:2
+
+#number of gates is necessary
+
+gates:3
+
+	AND:0-1->3
+
+	OR:2-1->4
+
+	NOT:4->5
+#+end_quote
+
+[[./visualizer/complex.png]]
+
+This circuit can be represented/input with the following file. 
+
+#+begin_quote
+nodes:20
+
+input:7
+
+output:3
+
+#number of gates is necessary to be accurate, after the number is fullfilled if there are more gates they are not processed.
+
+gates:13
+
+# the individual gate information starts from here.
+
+# keep in mind that the node numbers starts from zero and is continuous.
+
+# there are no error checking right now, so mistakes will cause error in memory handling.
+
+# also make sure there is no loop in circuit, Idk what'll happen in that case. 
+
+    AND:0-1->7
+
+    AND:1-2->8
+
+    NOT:2->9
+
+    OR:7-8->12
+
+    AND:0-15->17
+
+    OR:12-13->15
+
+    AND:9-3->13
+
+    AND:12-3->16
+
+    NOT:16->18
+
+    OR:4-5->10
+
+    NOT:6->11
+
+    AND:10-11->14
+
+    OR:16-14->19	
+#+end_quote
+
+*** Input signals file (.inc)
+This file includes the signals at the input nodes. The signals has to match the number of inputs, if there is less missing inputs will be made zero, and if excess then they'll be ignored. don't use excess spaces or any characters.
+
+
+#+begin_quote
+110
+
+111
+
+100
+
+011
+
+000
+
+010
+
+101
+#+end_quote
+
+
+
+* TODO:
+A graphical interface with drag and drop to make the circuit. Maybe if I feel like it. 

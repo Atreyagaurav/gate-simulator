@@ -13,6 +13,8 @@
 #define UNDEF_GATE 0
 #define DEBUG_LEVEL 0 /*unused*/
 
+#define COMMENT_CHAR '#'
+
 /* enum {NOT,AND,OR} GateType; */
 
 typedef struct {
@@ -68,7 +70,7 @@ void nextLine(FILE* fp){
     case '\n':
     case ' ':
       continue;
-    case '#':
+    case COMMENT_CHAR:
       while(fgetc(fp)!='\n');
       break;
     default:
@@ -177,6 +179,8 @@ void parseGateDef(Gate* g,char* str){
     if(str[i]==' ' || str[i]=='\t'){
       i+=1;
       continue;
+    }else if (str[i]==COMMENT_CHAR){
+      break;
     }
     nodes[j++] = str[i++];
   }
@@ -371,13 +375,13 @@ Circuit* readCircuitFile(char* filename){
   FILE * fp;
   fp = fopen(filename,"r");
   nextLine(fp);
-  fscanf(fp,"nodes:%d\n",&totN);
+  fscanf(fp,"nodes:%d",&totN);
   nextLine(fp);
-  fscanf(fp,"input:%d\n",&inN);
+  fscanf(fp,"input:%d",&inN);
   nextLine(fp);
-  fscanf(fp,"output:%d\n",&outN);
+  fscanf(fp,"output:%d",&outN);
   nextLine(fp);
-  fscanf(fp,"gates:%d\n",&gateN);
+  fscanf(fp,"gates:%d",&gateN);
   nextLine(fp);
 
   gates = malloc(gateN * sizeof(Gate));
@@ -386,7 +390,7 @@ Circuit* readCircuitFile(char* filename){
   for(i=0;i<gateN;i++){
     fscanf(fp,"%s\n",line);
     nextLine(fp);
-    parseGateDef((gates+i),line); /*memory leak manage later*/
+    parseGateDef((gates+i),line); 
     printf("parsing %d gates\r",i+1);
   }
   printf("\n");
